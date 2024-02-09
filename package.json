@@ -1,0 +1,29 @@
+{
+  "name": "storage-master",
+  "version": "1.0.0",
+  "description": "A simple module for JSON storing and managing data.",
+  "main": "module/storage-master.js",
+  "types": "module/storage-master.d.ts",
+  "files": [
+    "LICENSE",
+    "README.md",
+    "module/*"
+  ],
+  "scripts": {},
+  "keywords": [
+    "json",
+    "storage",
+    "database",
+    "master"
+  ],
+  "author": "Kio Gia",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/kiogia/storage-master.git"
+  },
+  "bugs": {
+    "url": "https://github.com/kiogia/storage-master/issues"
+  },
+  "homepage": "https://github.com/kiogia/storage-master#readme"
+}
