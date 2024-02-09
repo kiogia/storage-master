@@ -1,4 +1,4 @@
-declare module 'json-master';
+declare module 'storage-master';
 
 interface StorageOptions {
   /** Check data type before adding to storage. */
@@ -37,9 +37,16 @@ type StructureOptions = {
   };
 };
 
-type Destructure<Structure> = {
+type Output<Structure> = {
+  id: number;
+} & {
   // @ts-ignore
   [Key in keyof Structure]: Types[Structure[Key]['type']];
+};
+
+type Input<Structure> = {
+  // @ts-ignore
+  [Key in keyof Structure]?: Types[Structure[Key]['type']];
 };
 
 export class Storage<Structure extends StructureOptions> {
@@ -49,7 +56,7 @@ export class Storage<Structure extends StructureOptions> {
    * @example
    * ```js
    * import { resolve } from 'path';
-   * import { Storage } from 'json-master';
+   * import { Storage } from 'storage-master';
    *
    * const path = resolve('storages', 'users.json');
    * const structure = {
@@ -145,7 +152,7 @@ export class Storage<Structure extends StructureOptions> {
     /** The ID whose value is to be set. */
     key: number | string,
     /** Values ​​to set for the ID. */
-    values: Destructure<Structure>
+    values: Input<Structure>
   ): this;
 
   /**
@@ -161,7 +168,7 @@ export class Storage<Structure extends StructureOptions> {
   get(
     /** The key you need to obtain. */
     id: number | string
-  ): Destructure<Structure>;
+  ): Output<Structure>;
 
   /**
    * @description
@@ -184,7 +191,7 @@ export class Storage<Structure extends StructureOptions> {
     field?: keyof Structure;
     /** Sorting order. */
     order?: 'ascending' | 'descending';
-  }): Array<Destructure<Structure>>;
+  }): Array<Output<Structure>>;
 
   /**
    * @description
@@ -208,9 +215,9 @@ export class Storage<Structure extends StructureOptions> {
       /** Row ID. */
       id: number;
       /** Row values. */
-      values: Destructure<Structure>;
+      values: Output<Structure>;
       /** Sets the row values. */
-      set: (values: Destructure<Structure>) => {};
+      set: (values: Input<Structure>) => {};
       /** Removes a row from storage. */
       delete: () => {};
     }) => {}
