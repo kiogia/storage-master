@@ -38,7 +38,7 @@ type StructureOptions = {
 };
 
 type Output<Structure> = {
-  id: number;
+  id: number | string;
 } & {
   // @ts-ignore
   [Key in keyof Structure]: Types[Structure[Key]['type']];
@@ -55,10 +55,10 @@ export class Storage<Structure extends StructureOptions> {
    * Creating a storage.
    * @example
    * ```js
-   * import { resolve } from 'path';
-   * import { Storage } from 'storage-master';
+   * import { resolve } from 'path'
+   * import { Storage } from 'storage-master'
    *
-   * const path = resolve('storages', 'users.json');
+   * const path = resolve('storages', 'users.json')
    * const structure = {
    *   name: {
    *     type: 'string',
@@ -70,24 +70,24 @@ export class Storage<Structure extends StructureOptions> {
    *     type: 'boolean',
    *     default: false,
    *   },
-   * };
+   * }
    * const options = {
    *   spaces: 2,
    *   save: {
    *     onExit: true,
    *   },
-   * };
+   * }
    *
-   * const storage = new Storage(path, structure, options);
+   * const storage = new Storage(path, structure, options)
    *
-   * const userID = 12345;
+   * const userID = 12345
    * storage.set(userID, {
    *   name: 'Kio Gia',
    *   age: 21,
-   * });
+   * })
    *
-   * const user = storage.get(userID);
-   * console.log(user);
+   * const user = storage.get(userID)
+   * console.log(user)
    * ```
    */
   constructor(
@@ -152,7 +152,7 @@ export class Storage<Structure extends StructureOptions> {
     /** The ID whose value is to be set. */
     key: number | string,
     /** Values ​​to set for the ID. */
-    values: Input<Structure>
+    values?: Input<Structure>
   ): this;
 
   /**
@@ -166,8 +166,9 @@ export class Storage<Structure extends StructureOptions> {
    * ```
    */
   get(
-    /** The key you need to obtain. */
-    id: number | string
+    /** The ID you need to obtain. */
+    id: number | string,
+    field?: keyof Structure
   ): Output<Structure>;
 
   /**
@@ -222,6 +223,75 @@ export class Storage<Structure extends StructureOptions> {
       delete: () => {};
     }) => {}
   ): void;
+}
+
+export class ObjectStorage<Structure extends StructureOptions> {
+  /**
+   * @description
+   * Creating a storage.
+   * @example
+   * ```js
+   * import { resolve } from 'path'
+   * import { KeyStorage } from 'storage-master'
+   *
+   * const path = resolve('storages', 'apples.json')
+   * const storage = new KeyStorage(path)
+   *
+   * const userID = 12345
+   * storage.set(userID, 2 + 2).save()
+   * const applesCount = storage.get(userID)
+   * console.log(applesCount)
+   * ```
+   */
+  constructor(
+    /** Path to the folder where the storage will be. */
+    directory: string,
+    /** Additional options. */
+    options: StorageOptions & {
+      structure?: Structure;
+    }
+  );
+
+  /**
+   * @description
+   * Saving storage.
+   * @example
+   * ```js
+   * storage.save()
+   * ```
+   */
+  save(): this;
+
+  /**
+   * @description
+   * Set the values ​​of the specified key.
+   * @example
+   * ```js
+   * const userID = 12345
+   * storage.set(userID, 2 + 2)
+   * ```
+   */
+  set(
+    /** The key whose value is to be set. */
+    key: string | number,
+    /** Values ​​to set for the key. */
+    value: string | number | boolean
+  ): this;
+
+  /**
+   * @description
+   * Retrieve the specified key from the storage.
+   * @example
+   * ```js
+   * const userID = 12345
+   * const applesCount = storage.get(userID)
+   * console.log(user)
+   * ```
+   */
+  get(
+    /** The key you need to obtain. */
+    key: string | number
+  ): any;
 }
 
 export default Storage;

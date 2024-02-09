@@ -106,10 +106,13 @@ class Storage {
       });
     } else {
       this.storage.push({
-        id: Number(id),
+        id: id,
         ...fields.reduce((previous, current) => {
-          previous[current] =
-            values[current] ?? this.structure[current].default ?? null;
+          if (this.#isCorrectType(current, values[current])) {
+            previous[current] = values[current];
+          } else {
+            previous[current] = this.structure[current].default ?? null;
+          }
           return previous;
         }, {}),
       });
@@ -117,8 +120,8 @@ class Storage {
     return this;
   }
 
-  get(id) {
-    return this.storage.find((row) => row.id == id);
+  get(id, field = 'id') {
+    return this.storage.find((row) => row[field] == id);
   }
 
   getAll(sort = {}) {
@@ -141,4 +144,94 @@ class Storage {
   }
 }
 
-module.exports = { default: Storage, Storage };
+class ObjectStorage {
+  constructor(directory, options = {}) {
+    this.directory = directory;
+    this.options = options;
+    this.structure = options?.structure;
+
+    this.#createFile();
+    this.#saveAuto();
+    this.#saveOnExit();
+    this.storage = JSON.parse(fs.readFileSync(directory));
+    this.#structure();
+  }
+
+  #createFile() {
+    if (!fs.existsSync(this.directory)) {
+      fs.writeFileSync(this.directory, JSON.stringify({}));
+    }
+  }
+
+  #saveAuto() {
+    const { save } = this.options;
+    if (save?.auto && typeof save?.auto == 'number') {
+      setInterval(() => {
+        this.save();
+      }, save.auto * 1000);
+    }
+  }
+
+  #saveOnExit() {
+    const { save } = this.options;
+    if (save?.onExit) {
+      process.on('exit', () => {
+        this.save();
+      });
+      process.on('SIGINT', () => {
+        this.save();
+        process.exit(0);
+      });
+    }
+  }
+
+  #structure() {
+    if (this.structure) {
+      this.storage = Object.keys(this.structure).reduce((previous, current) => {
+        const rename = this.structure[current].rename;
+        if (rename) {
+          previous[rename] = this.storage?.[current];
+        } else {
+          previous[current] = this.storage?.[current];
+        }
+        return previous;
+      }, {});
+    }
+  }
+
+  #isField(key) {
+    return key in this.structure;
+  }
+
+  #isCorrectType(key, data) {
+    if (this.options?.checkType == false) {
+      return this.#isField(key);
+    } else {
+      const { type } = this.structure[key];
+      return this.#isField(key) && typeof data == type;
+    }
+  }
+
+  save() {
+    const data = JSON.stringify(this.storage, null, this.options?.spaces ?? 0);
+    fs.writeFileSync(this.directory, data);
+    return this;
+  }
+
+  set(key, value) {
+    if (this.structure) {
+      if (this.#isCorrectType(key, value)) {
+        this.storage[key] = value;
+      }
+    } else {
+      this.storage[key] = value;
+    }
+    return this;
+  }
+
+  get(key) {
+    return this.storage[key];
+  }
+}
+
+module.exports = { default: Storage, Storage, ObjectStorage };
