@@ -1,6 +1,6 @@
 {
   "name": "storage-master",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "A simple module for JSON storing and managing data.",
   "main": "module/storage-master.js",
   "types": "module/storage-master.d.ts",
