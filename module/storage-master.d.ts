@@ -1,38 +1,24 @@
 declare module 'storage-master';
 
-interface StorageOptions {
-  /** Check data type before adding to storage. */
-  checkType?: boolean;
-  /** The number of spaces when formatting the storage. */
-  spaces?: number;
-  /** Save automation options. */
-  save?: {
-    /** Automatic interval saving. */
-    auto?: number;
-    /** Saving when program ends. */
-    onExit?: boolean;
-  };
-}
-
-/**
- * Data types.
- */
 type Types = {
   string: string;
   number: number;
   boolean: boolean;
 };
 
-/**
- * Structure of the stored data.
- */
-type StructureOptions = {
+export interface StorageOptions {
+  checkType?: boolean;
+  spaces?: number;
+  save?: {
+    auto?: number;
+    onExit?: boolean;
+  };
+}
+
+export type StructureOptions = {
   [field: string]: {
-    /** Field value type. */
     type: 'string' | 'number' | 'boolean';
-    /** Default value for the field. */
     default?: string | number | boolean;
-    /** New field name. */
     rename?: string;
   };
 };
@@ -44,15 +30,13 @@ type Output<Structure> = {
   [Key in keyof Structure]: Types[Structure[Key]['type']];
 };
 
-type Input<Structure> = {
+export type Input<Structure> = {
   // @ts-ignore
   [Key in keyof Structure]?: Types[Structure[Key]['type']];
 };
 
 export class Storage<Structure extends StructureOptions> {
   /**
-   * @description
-   * Creating a storage.
    * @example
    * ```js
    * import { resolve } from 'path'
@@ -71,14 +55,8 @@ export class Storage<Structure extends StructureOptions> {
    *     default: false,
    *   },
    * }
-   * const options = {
-   *   spaces: 2,
-   *   save: {
-   *     onExit: true,
-   *   },
-   * }
    *
-   * const storage = new Storage(path, structure, options)
+   * const storage = new Storage(path, structure)
    *
    * const userID = 12345
    * storage.set(userID, {
@@ -91,17 +69,12 @@ export class Storage<Structure extends StructureOptions> {
    * ```
    */
   constructor(
-    /** Path to the folder where the storage will be. */
     directory: string,
-    /** Structure of the stored data. */
     structure: Structure,
-    /** Additional options. */
     options?: StorageOptions
   );
 
   /**
-   * @description
-   * Saving storage.
    * @example
    * ```js
    * storage.save()
@@ -110,8 +83,6 @@ export class Storage<Structure extends StructureOptions> {
   save(): this;
 
   /**
-   * @description
-   * Clears the storage completely (without saving).
    * @example
    * ```js
    * storage.clear()
@@ -124,22 +95,26 @@ export class Storage<Structure extends StructureOptions> {
   clear(): this;
 
   /**
-   * @description
-   * Removes the specified ID from storage.
    * @example
    * ```js
    * const userID = 12345
    * storage.delete(userID)
    * ```
    */
-  delete(
-    /** The ID you need to obtain. */
-    id: number | string
-  ): this;
+  delete(id: number | string): this;
 
   /**
-   * @description
-   * Set the values ​​of the specified ID.
+   * @example
+   * ```js
+   * const userID = 12345
+   * storage.add(userID, {
+   *   name: 'Kio'
+   * })
+   * ```
+   */
+  add(id: number | string, values?: Input<Structure>): this;
+
+  /**
    * @example
    * ```js
    * const userID = 12345
@@ -148,16 +123,9 @@ export class Storage<Structure extends StructureOptions> {
    * })
    * ```
    */
-  set(
-    /** The ID whose value is to be set. */
-    key: number | string,
-    /** Values ​​to set for the ID. */
-    values?: Input<Structure>
-  ): this;
+  set(id: number | string, values?: Input<Structure>): this;
 
   /**
-   * @description
-   * Retrieve the specified ID from the storage.
    * @example
    * ```js
    * const userID = 12345
@@ -166,14 +134,71 @@ export class Storage<Structure extends StructureOptions> {
    * ```
    */
   get(
-    /** The ID you need to obtain. */
-    id: number | string,
-    field?: keyof Structure
+    value: number | string,
+    field?: 'id' | keyof Structure
   ): Output<Structure>;
 
   /**
-   * @description
-   * Get all values.
+   * @example
+   * ```js
+   * const user = storage.getOne(21, 'age')
+   * console.log(user)
+   * ```
+   */
+  getOne(
+    value: number | string,
+    field?: 'id' | keyof Structure,
+    array?: Array<Output<Structure>>
+  ): Output<Structure>;
+
+  /**
+   * @example
+   * ```js
+   * const premiumUsers = storage.getFew(true, 'is_premium')
+   * console.log(premiumUsers)
+   * ```
+   */
+  getFew(
+    value: number | string,
+    field?: 'id' | keyof Structure,
+    sort?: {
+      field?: 'id' | keyof Structure;
+      order?: 'ascending' | 'descending';
+    },
+    array?: Array<Output<Structure>>
+  ): Array<Output<Structure>>;
+
+  /**
+   * @example
+   * ```js
+   * const seniorDevs = storage
+   *   .find(true, 'is_developers')
+   *   .find(true, 'is_senior)
+   *   .findFew(false, 'is_retired')
+   * console.log(seniorDevs)
+   * ```
+   */
+  find(
+    value: number | string,
+    field?: 'id' | keyof Structure,
+    array?: Array<Output<Structure>>
+  ): {
+    result: Array<Output<Structure>>;
+    find: (
+      value: number | string,
+      field?: 'id' | keyof Structure
+    ) => Storage<Structure>['find'];
+    getOne: (
+      value: number | string,
+      field?: 'id' | keyof Structure
+    ) => Output<Structure>;
+    getFew: (
+      value: number | string,
+      field?: 'id' | keyof Structure
+    ) => Array<Output<Structure>>;
+  };
+
+  /**
    * @example
    * ```js
    * const users = storage.getAll()
@@ -188,21 +213,17 @@ export class Storage<Structure extends StructureOptions> {
    * ```
    */
   getAll(sort?: {
-    /** The field by which to sort the values. */
-    field?: keyof Structure;
-    /** Sorting order. */
+    field?: 'id' | keyof Structure;
     order?: 'ascending' | 'descending';
   }): Array<Output<Structure>>;
 
   /**
-   * @description
-   * Loop through all array values.
    * @example
    * ```js
    * storage.forEach((row) => {
-   *   if (row.value.is_premium) {
+   *   if (row.values.is_premium) {
    *     row.set({
-   *       name: '💎 ' + row.value.name
+   *       name: '💎 ' + row.values.name
    *     })
    *     console.log('Added premium user badge!')
    *   } else {
@@ -213,29 +234,23 @@ export class Storage<Structure extends StructureOptions> {
    */
   forEach(
     callback: (row: {
-      /** Row ID. */
       id: number;
-      /** Row values. */
       values: Output<Structure>;
-      /** Sets the row values. */
       set: (values: Input<Structure>) => {};
-      /** Removes a row from storage. */
       delete: () => {};
-    }) => {}
+    }) => void
   ): void;
 }
 
 export class ObjectStorage<Structure extends StructureOptions> {
   /**
-   * @description
-   * Creating a storage.
    * @example
    * ```js
    * import { resolve } from 'path'
    * import { KeyStorage } from 'storage-master'
    *
    * const path = resolve('storages', 'apples.json')
-   * const storage = new KeyStorage(path)
+   * const storage = new ObjectStorage(path)
    *
    * const userID = 12345
    * storage.set(userID, 2 + 2).save()
@@ -244,17 +259,13 @@ export class ObjectStorage<Structure extends StructureOptions> {
    * ```
    */
   constructor(
-    /** Path to the folder where the storage will be. */
     directory: string,
-    /** Additional options. */
     options: StorageOptions & {
       structure?: Structure;
     }
   );
 
   /**
-   * @description
-   * Saving storage.
    * @example
    * ```js
    * storage.save()
@@ -263,24 +274,15 @@ export class ObjectStorage<Structure extends StructureOptions> {
   save(): this;
 
   /**
-   * @description
-   * Set the values ​​of the specified key.
    * @example
    * ```js
    * const userID = 12345
    * storage.set(userID, 2 + 2)
    * ```
    */
-  set(
-    /** The key whose value is to be set. */
-    key: string | number,
-    /** Values ​​to set for the key. */
-    value: string | number | boolean
-  ): this;
+  set(key: string | number, value: string | number | boolean): this;
 
   /**
-   * @description
-   * Retrieve the specified key from the storage.
    * @example
    * ```js
    * const userID = 12345
@@ -288,10 +290,7 @@ export class ObjectStorage<Structure extends StructureOptions> {
    * console.log(user)
    * ```
    */
-  get(
-    /** The key you need to obtain. */
-    key: string | number
-  ): any;
+  get(key: string | number): any;
 }
 
 export default Storage;

@@ -21,16 +21,27 @@ class Storage {
 
   #saveAuto() {
     const { save } = this.options;
-    if (save?.auto && typeof save?.auto == 'number') {
-      setInterval(() => {
-        this.save();
-      }, save.auto * 1000);
+    if (save?.auto == 0) {
+      return null;
+    } else {
+      if (typeof save?.auto == 'number') {
+        setInterval(() => {
+          this.save();
+        }, save.auto * 1000);
+      } else {
+        setInterval(() => {
+          this.save();
+        }, 60 * 1000);
+      }
     }
   }
 
   #saveOnExit() {
     const { save } = this.options;
-    if (save?.onExit) {
+    if (save?.onExit == false) {
+      return null;
+    }
+    if (save?.onExit == true || save?.onExit == undefined) {
       process.on('exit', () => {
         this.save();
       });
@@ -72,10 +83,31 @@ class Storage {
     }
   }
 
-  #sort(array, field, order) {
+  #sort(array, field = 'id', order = 'ascending') {
     return array.sort((a, b) => {
       return order == 'ascending' ? a[field] - b[field] : b[field] - a[field];
     });
+  }
+
+  #generateID() {
+    const random = Math.floor(Math.random() * (2147483648 - 0 + 1)) + 0;
+    if (this.get(random)) {
+      return this.#generateID();
+    } else {
+      return random;
+    }
+  }
+
+  #createRow(values) {
+    const fields = Object.keys(this.structure);
+    return fields.reduce((previous, current) => {
+      if (this.#isCorrectType(current, values[current])) {
+        previous[current] = values[current];
+      } else {
+        previous[current] = this.structure[current].default ?? null;
+      }
+      return previous;
+    }, {});
   }
 
   save() {
@@ -94,10 +126,18 @@ class Storage {
     return this;
   }
 
+  add(id, values = {}) {
+    if (!this.get(id)) {
+      this.storage.push({
+        id: id ?? this.#generateID(),
+        ...this.#createRow(values),
+      });
+    }
+    return this;
+  }
+
   set(id, values = {}) {
-    const isExists = this.get(id);
-    const fields = Object.keys(this.structure);
-    if (isExists) {
+    if (this.get(id)) {
       const index = this.storage.findIndex((row) => row.id == id);
       Object.entries(values).forEach(([field, value]) => {
         if (this.#isCorrectType(field, value)) {
@@ -106,30 +146,44 @@ class Storage {
       });
     } else {
       this.storage.push({
-        id: id,
-        ...fields.reduce((previous, current) => {
-          if (this.#isCorrectType(current, values[current])) {
-            previous[current] = values[current];
-          } else {
-            previous[current] = this.structure[current].default ?? null;
-          }
-          return previous;
-        }, {}),
+        id: id ?? this.#generateID(),
+        ...this.#createRow(values),
       });
     }
     return this;
   }
 
-  get(id, field = 'id') {
-    return this.storage.find((row) => row[field] == id);
+  get(id) {
+    return this.storage.find((row) => row?.id == id);
+  }
+
+  getOne(value, field, array = this.storage) {
+    return array.find((row) => row[field] == value);
+  }
+
+  getFew(value, field, sort = {}, array = this.storage) {
+    const result = array.filter((row) => row[field] == value);
+    if (sort) {
+      return this.#sort(result, sort.field, sort.order);
+    } else {
+      return result;
+    }
+  }
+
+  find(value, field, array = this.storage) {
+    const result = array.filter((row) => row[field] == value);
+    return {
+      result: result,
+      find: (findValue, findField) => this.find(findValue, findField, result),
+      getOne: (findValue, findField) =>
+        this.getOne(findValue, findField, result),
+      getFew: (findValue, findField, sort) =>
+        this.getFew(findValue, findField, sort, result),
+    };
   }
 
   getAll(sort = {}) {
-    return this.#sort(
-      this.storage,
-      sort.field ?? 'id',
-      sort.order ?? 'ascending'
-    );
+    return this.#sort(this.storage, sort.field, sort.order);
   }
 
   forEach(callback) {
@@ -165,16 +219,27 @@ class ObjectStorage {
 
   #saveAuto() {
     const { save } = this.options;
-    if (save?.auto && typeof save?.auto == 'number') {
-      setInterval(() => {
-        this.save();
-      }, save.auto * 1000);
+    if (save?.auto == 0) {
+      return null;
+    } else {
+      if (typeof save?.auto == 'number') {
+        setInterval(() => {
+          this.save();
+        }, save.auto * 1000);
+      } else {
+        setInterval(() => {
+          this.save();
+        }, 60 * 1000);
+      }
     }
   }
 
   #saveOnExit() {
     const { save } = this.options;
-    if (save?.onExit) {
+    if (save?.onExit == false) {
+      return null;
+    }
+    if (save?.onExit == true || save?.onExit == undefined) {
       process.on('exit', () => {
         this.save();
       });

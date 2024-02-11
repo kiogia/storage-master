@@ -37,15 +37,9 @@ const structure = {
     default: false,
   },
 };
-const options = {
-  spaces: 2,
-  save: {
-    onExit: true,
-  },
-};
 
 // Create a class for further work with the repository
-const storage = new Storage(path, structure, options);
+const storage = new Storage(path, structure);
 
 const userID = 12345;
 storage.set(userID, {
